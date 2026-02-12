@@ -40,9 +40,9 @@ function initCardForm() {
     });
 
     const formElement = document.getElementById('form-checkout');
-formElement.addEventListener('submit', (e) => {
-    e.preventDefault(); // <--- ESTO EVITA LA RECARGA DE LA PÁGINA
-});
+    formElement.addEventListener('submit', (e) => {
+        e.preventDefault();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -210,7 +210,6 @@ async function manageSubscription() {
         const response = await fetch(`${CONFIG.API_BASE_URL}/commercial/subscriptions/${subscriptionUuid}/${action}`, {
             method: 'PATCH',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiToken}`
             }
         });
