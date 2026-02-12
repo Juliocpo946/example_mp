@@ -30,11 +30,13 @@ function initCardForm() {
         callbacks: {
             onFormMounted: error => { if (error) console.warn("Form Mounted handling error: ", error) },
             onCardTokenReceived: async (error, token) => {
+                 console.log("Token recibido:", token.token);  // <-- AGREGAR
+                 console.log("Token ID:", token.id);
                 if (error) {
                     showResponse(document.getElementById('subscription_response'), 'error', JSON.stringify(error, null, 2));
                     return;
                 }
-                await createSubscriptionWithToken(token.id);
+                await createSubscriptionWithToken(token.token);
             },
         },
     });
@@ -154,6 +156,7 @@ async function createAccount() {
 }
 
 async function createSubscriptionWithToken(cardTokenId) {
+    console.log("Enviando card_token_id:", cardTokenId); // <-- AGREGAR
     const apiToken = document.getElementById('api_token').value;
     const tenantId = document.getElementById('tenant_id').value;
     const planUuid = document.getElementById('subscription_plan_uuid').value;
