@@ -5,7 +5,44 @@ let mp = null;
 function initMercadoPago() {
     if (CONFIG.MERCADOPAGO_PUBLIC_KEY && CONFIG.MERCADOPAGO_PUBLIC_KEY !== 'TEST-your-public-key') {
         mp = new MercadoPago(CONFIG.MERCADOPAGO_PUBLIC_KEY);
+        initCardForm();
     }
+}
+
+function initCardForm() {
+    if (!mp) return;
+    
+    const cardForm = mp.cardForm({
+        amount: "100.00",
+        iframe: true,
+        form: {
+            id: "form-checkout",
+            cardNumber: { id: "form-checkout__cardNumber", placeholder: "Numero de tarjeta" },
+            expirationDate: { id: "form-checkout__expirationDate", placeholder: "MM/YY" },
+            securityCode: { id: "form-checkout__securityCode", placeholder: "CVV" },
+            cardholderName: { id: "form-checkout__cardholderName", placeholder: "Titular" },
+            issuer: { id: "form-checkout__issuer" },
+            installments: { id: "form-checkout__installments" },
+            identificationType: { id: "form-checkout__identificationType" },
+            identificationNumber: { id: "form-checkout__identificationNumber" },
+            cardholderEmail: { id: "form-checkout__cardholderEmail", placeholder: "Email" },
+        },
+        callbacks: {
+            onFormMounted: error => { if (error) console.warn("Form Mounted handling error: ", error) },
+            onCardTokenReceived: async (error, token) => {
+                if (error) {
+                    showResponse(document.getElementById('subscription_response'), 'error', JSON.stringify(error, null, 2));
+                    return;
+                }
+                await createSubscriptionWithToken(token.id);
+            },
+        },
+    });
+
+    const formElement = document.getElementById('form-checkout');
+formElement.addEventListener('submit', (e) => {
+    e.preventDefault(); // <--- ESTO EVITA LA RECARGA DE LA PÁGINA
+});
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,7 +78,7 @@ async function loadPlans() {
                     <div class="plan-item" onclick="selectPlan('${plan.uuid}', '${escapeHtml(plan.name)}', ${plan.price}, '${plan.currency}', '${plan.billing_cycle}')">
                         <div class="plan-name">${escapeHtml(plan.name)}</div>
                         <div class="plan-details">
-                            ${plan.code} | ${plan.billing_cycle} | $${plan.price/100} ${plan.currency}
+                            ${plan.code} | ${plan.billing_cycle} | $${plan.price} ${plan.currency}
                             <br>UUID: ${plan.uuid}
                         </div>
                     </div>
@@ -116,11 +153,11 @@ async function createAccount() {
     }
 }
 
-async function createSubscription() {
+async function createSubscriptionWithToken(cardTokenId) {
     const apiToken = document.getElementById('api_token').value;
     const tenantId = document.getElementById('tenant_id').value;
     const planUuid = document.getElementById('subscription_plan_uuid').value;
-    const customerEmail = document.getElementById('customer_email').value;
+    const customerEmail = document.getElementById('form-checkout__cardholderEmail').value;
     const responseDiv = document.getElementById('subscription_response');
 
     if (!apiToken || !tenantId || !planUuid || !customerEmail) {
@@ -138,7 +175,8 @@ async function createSubscription() {
             body: JSON.stringify({
                 tenant_id: tenantId,
                 plan_uuid: planUuid,
-                customer_email: customerEmail
+                customer_email: customerEmail,
+                card_token_id: cardTokenId
             })
         });
 
@@ -146,28 +184,8 @@ async function createSubscription() {
         
         if (response.ok) {
             showResponse(responseDiv, 'success', JSON.stringify(data, null, 2));
-            
-            if (data.data) {
-                if (data.data.subscription_id) {
-                    document.getElementById('manage_subscription_uuid').value = data.data.subscription_id;
-                }
-                
-                if (data.data.init_point) {
-                    const linkContainer = document.createElement('div');
-                    linkContainer.style.marginTop = '15px';
-                    linkContainer.innerHTML = `
-                        <a href="${data.data.init_point}" 
-                           target="_blank" 
-                           class="mp-link">
-                           Completar Pago en MercadoPago
-                        </a>
-                    `;
-                    responseDiv.appendChild(linkContainer);
-                    
-                    if (mp && selectedPlanData) {
-                        renderMercadoPagoButton(data.data.init_point, responseDiv);
-                    }
-                }
+            if (data.data && data.data.subscription_id) {
+                document.getElementById('manage_subscription_uuid').value = data.data.subscription_id;
             }
         } else {
             showResponse(responseDiv, 'error', JSON.stringify(data, null, 2));
@@ -175,22 +193,6 @@ async function createSubscription() {
     } catch (error) {
         showResponse(responseDiv, 'error', error.message);
     }
-}
-
-function renderMercadoPagoButton(initPoint, container) {
-    const buttonContainer = document.createElement('div');
-    buttonContainer.id = 'mp-button-container';
-    buttonContainer.style.marginTop = '15px';
-    
-    const button = document.createElement('button');
-    button.className = 'mp-button';
-    button.textContent = 'Pagar con MercadoPago';
-    button.onclick = () => {
-        window.open(initPoint, '_blank');
-    };
-    
-    buttonContainer.appendChild(button);
-    container.appendChild(buttonContainer);
 }
 
 async function manageSubscription() {

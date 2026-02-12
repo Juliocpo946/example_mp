@@ -14,7 +14,6 @@
 
         <div class="section">
             <h2>1. Obtener Token de Plataforma</h2>
-            
             <div class="form-group">
                 <label>Token de Plataforma:</label>
                 <input type="text" id="platform_token" placeholder="token_2025">
@@ -26,9 +25,6 @@
 
         <div class="section">
             <h2>2. Crear Cuenta (Account)</h2>
-            <div class="info-text">
-                Se necesita un Bearer token de plataforma para crear cuentas
-            </div>
             <div class="form-group">
                 <label>Store UUID:</label>
                 <input type="text" id="store_uuid" placeholder="UUID de la tienda">
@@ -38,7 +34,7 @@
                 <input type="text" id="store_name" placeholder="Nombre de la tienda">
             </div>
             <div class="form-group">
-                <label>Plan UUID (seleccionar de lista arriba):</label>
+                <label>Plan UUID:</label>
                 <input type="text" id="plan_uuid" readonly placeholder="Selecciona un plan arriba">
             </div>
             <button onclick="createAccount()">Crear Cuenta</button>
@@ -46,27 +42,49 @@
         </div>
 
         <div class="section">
-            <h2>3. Crear Suscripción</h2>
-            <div class="info-text">
-                Usar el API Token obtenido en el paso anterior como Bearer token
-            </div>
+            <h2>3. Crear Suscripción (Pago Transparente)</h2>
             <div class="form-group">
                 <label>API Token de Cuenta:</label>
                 <input type="text" id="api_token" placeholder="Token obtenido al crear cuenta">
             </div>
             <div class="form-group">
-                <label>Tenant ID (external_account_id):</label>
+                <label>Tenant ID:</label>
                 <input type="text" id="tenant_id" placeholder="UUID del tenant">
             </div>
             <div class="form-group">
                 <label>Plan UUID:</label>
                 <input type="text" id="subscription_plan_uuid" placeholder="UUID del plan">
             </div>
-            <div class="form-group">
-                <label>Email del Cliente:</label>
-                <input type="email" id="customer_email" placeholder="cliente@ejemplo.com">
-            </div>
-            <button onclick="createSubscription()">Crear Suscripción</button>
+            
+            <form id="form-checkout">
+                <div class="form-group">
+                    <label>Número de tarjeta</label>
+                    <div id="form-checkout__cardNumber" class="container" style="height: 40px; background: white; border-radius: 6px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de vencimiento</label>
+                    <div id="form-checkout__expirationDate" class="container" style="height: 40px; background: white; border-radius: 6px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>CVV</label>
+                    <div id="form-checkout__securityCode" class="container" style="height: 40px; background: white; border-radius: 6px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Titular de la tarjeta</label>
+                    <input type="text" id="form-checkout__cardholderName" />
+                </div>
+                <div class="form-group">
+                    <label>Email del Cliente</label>
+                    <input type="email" id="form-checkout__cardholderEmail" />
+                </div>
+                
+                <select id="form-checkout__issuer" style="display:none"></select>
+                <select id="form-checkout__installments" style="display:none"></select>
+                <input type="hidden" id="form-checkout__identificationType" />
+                <input type="hidden" id="form-checkout__identificationNumber" />
+                
+                <button type="submit" id="form-checkout__submit">Pagar Suscripción</button>
+            </form>
             <div id="subscription_response" class="response"></div>
         </div>
 
